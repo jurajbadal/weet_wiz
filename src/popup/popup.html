@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 340px;
+      max-height: 580px;
+      display: flex;
+      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      background: #0f172a;
+      color: #e2e8f0;
+      overflow: hidden;
+    }
+    #content {
+      overflow-y: auto;
+      flex: 1;
+    }
+    .header {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { font-weight: 700; font-size: 15px; color: #38bdf8; letter-spacing: -0.3px; }
+    .domain { color: #64748b; font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .score-row {
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .score-circle {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      flex-shrink: 0;
+      border: 3px solid currentColor;
+    }
+    .score-num { font-size: 26px; font-weight: 700; line-height: 1; }
+    .score-max { font-size: 10px; color: #64748b; }
+    .score-meta { flex: 1; }
+    .risk-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .score-label { font-size: 11px; color: #64748b; }
+
+    .risk-very-low  { background: #0d2b1e; color: #4ade80; border: 1px solid #166534; }
+    .risk-low       { background: #0c1f3f; color: #60a5fa; border: 1px solid #1e40af; }
+    .risk-medium    { background: #291800; color: #fbbf24; border: 1px solid #78350f; }
+    .risk-high      { background: #2d0f0f; color: #f87171; border: 1px solid #7f1d1d; }
+    .risk-very-high { background: #200000; color: #ef4444; border: 1px solid #6b0000; }
+
+    .color-very-low  { color: #4ade80; border-color: #4ade80; }
+    .color-low       { color: #60a5fa; border-color: #60a5fa; }
+    .color-medium    { color: #fbbf24; border-color: #fbbf24; }
+    .color-high      { color: #f87171; border-color: #f87171; }
+    .color-very-high { color: #ef4444; border-color: #ef4444; }
+
+    .section { border-top: 1px solid #1e293b; padding: 8px 14px 10px; }
+    .section-title {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: #475569; margin-bottom: 5px;
+    }
+    .item { padding: 2px 0; font-size: 12px; line-height: 1.45; color: #94a3b8; }
+    .item.strength { color: #86efac; }
+    .no-items { font-size: 12px; color: #334155; font-style: italic; }
+
+    .state-msg { padding: 28px 14px; text-align: center; color: #475569; font-size: 13px; }
+    .state-msg .icon { font-size: 28px; margin-bottom: 8px; }
+
+    .settings { border-top: 1px solid #1e293b; padding: 10px 14px; }
+    .settings label { display: block; font-size: 10px; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+    .settings input {
+      width: 100%; padding: 6px 8px;
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 4px; color: #e2e8f0; font-size: 12px; outline: none;
+    }
+    .settings input:focus { border-color: #38bdf8; }
+    .save-btn {
+      margin-top: 6px; padding: 5px 14px;
+      background: #0369a1; border: none; border-radius: 4px;
+      color: white; font-size: 12px; cursor: pointer;
+    }
+    .save-btn:hover { background: #0284c7; }
+    .saved-msg { font-size: 11px; color: #4ade80; margin-top: 4px; display: none; }
+    .settings-collapsed { border-top: 1px solid #1e293b; padding: 8px 14px; }
+    .settings-toggle { font-size: 11px; color: #475569; cursor: pointer; user-select: none; }
+    .settings-toggle:hover { color: #64748b; }
+    .settings-body { margin-top: 8px; }
+    .settings-body input {
+      width: 100%; padding: 6px 8px;
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 4px; color: #e2e8f0; font-size: 12px; outline: none;
+    }
+    .settings-body input:focus { border-color: #38bdf8; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">WeetWiz</span>
+    <span class="domain" id="domain"></span>
+  </div>
+  <div id="content">
+    <div class="state-msg">
+      <div class="icon">⏳</div>
+      Loading…
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
