@@ -33,7 +33,7 @@ chrome.webRequest.onHeadersReceived.addListener(
                         'Content-Type': 'application/json',
                         'X-API-Key': apiKey,
                     },
-                    body: JSON.stringify({ headers, protocol, cookies }),
+                    body: JSON.stringify({ headers, protocol, cookies, serverIp: details.ip || null, url: details.url }),
                 });
                 const data = await res.json();
                 if (!res.ok) {
