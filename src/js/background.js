@@ -21,7 +21,11 @@ chrome.webRequest.onHeadersReceived.addListener(
 
         chrome.storage.session.set({ [`result_${tabId}`]: { loading: true } });
 
-        chrome.storage.local.get('apiKey', async ({ apiKey }) => {
+        chrome.storage.local.get(['apiKey', 'scanEnabled'], async ({ apiKey, scanEnabled }) => {
+            if (scanEnabled === false) {
+                chrome.storage.session.set({ [`result_${tabId}`]: { disabled: true } });
+                return;
+            }
             if (!apiKey) {
                 chrome.storage.session.set({ [`result_${tabId}`]: { error: 'No API key — open popup to set one' } });
                 return;
@@ -40,7 +44,7 @@ chrome.webRequest.onHeadersReceived.addListener(
                     chrome.storage.session.set({ [`result_${tabId}`]: { error: data.error || `API error ${res.status}` } });
                     return;
                 }
-                chrome.storage.session.set({ [`result_${tabId}`]: data });
+                chrome.storage.session.set({ [`result_${tabId}`]: { ...data, timestamp: Date.now() } });
             } catch (err) {
                 chrome.storage.session.set({ [`result_${tabId}`]: { error: err.message } });
             }

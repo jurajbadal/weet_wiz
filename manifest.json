@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WeetWiz",
-  "version": "0.1.0",
+  "version": "1.0.9",
   "description": "Passive security audit on every tab — real headers, no clicks required",
   "permissions": ["webRequest", "storage", "tabs"],
   "host_permissions": ["<all_urls>"],

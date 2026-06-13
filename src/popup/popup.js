@@ -1,6 +1,40 @@
 const content = document.getElementById('content');
 const domainEl = document.getElementById('domain');
 
+// ── Left stripe: power + theme ──
+(async () => {
+    const { theme, scanEnabled } = await chrome.storage.local.get(['theme', 'scanEnabled']);
+    if (theme === 'light') document.body.classList.add('light');
+
+    const powerBtn = document.getElementById('powerBtn');
+    updatePowerBtn(powerBtn, scanEnabled !== false);
+
+    powerBtn?.addEventListener('click', async () => {
+        const { scanEnabled: cur } = await chrome.storage.local.get('scanEnabled');
+        const next = cur === false;
+        await chrome.storage.local.set({ scanEnabled: next });
+        updatePowerBtn(powerBtn, next);
+    });
+
+    document.getElementById('themeBtn')?.addEventListener('click', async () => {
+        const isLight = document.body.classList.toggle('light');
+        await chrome.storage.local.set({ theme: isLight ? 'light' : 'dark' });
+    });
+})();
+
+function updatePowerBtn(btn, enabled) {
+    if (!btn) return;
+    btn.classList.toggle('power-on', enabled);
+    btn.classList.toggle('power-off', !enabled);
+    btn.title = enabled ? 'Scanning active — click to disable' : 'Scanning disabled — click to enable';
+}
+
+// Open IP/external links in new tab instead of navigating popup
+document.addEventListener('click', e => {
+    const url = e.target.dataset?.url;
+    if (url) { e.preventDefault(); chrome.tabs.create({ url }); }
+});
+
 function riskClass(riskLevel) {
     return 'risk-' + (riskLevel || '').toLowerCase().replace(/\s+/g, '-');
 }
@@ -18,6 +52,14 @@ function securityLabel(riskLevel) {
         'very high': 'Very Low Security',
     };
     return map[(riskLevel || '').toLowerCase()] || riskLevel;
+}
+
+function formatTimestamp(ts) {
+    if (!ts) return null;
+    const d = new Date(ts);
+    const date = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return { date, time };
 }
 
 function renderCookies(cookies) {
@@ -45,14 +87,16 @@ function renderDetails(data) {
     const hosting = data.connection?.hostingInfo;
     const serverType = data.server?.type;
     const poweredBy = data.server?.poweredBy;
-    const ipStr = ip ? `${ip}${hosting ? ` — ${hosting}` : ''}` : null;
+    const ipStr = ip
+        ? `<a class="ip-link" data-url="https://ipinfo.io/${ip}">${ip}</a>${hosting ? ` — ${hosting}` : ''}`
+        : null;
     const rows = [
         ipStr          && `<div class="item">🌐 Server IP: ${ipStr}</div>`,
         serverType     && serverType !== 'Not disclosed' && `<div class="item">🖥 Server: ${serverType}</div>`,
         poweredBy      && `<div class="item">⚡ Powered by: ${poweredBy}</div>`,
     ].filter(Boolean).join('');
     if (!rows) return '';
-    return `<div class="section"><div class="section-title">Details</div>${rows}</div>`;
+    return `<div class="section"><div class="section-title">Detected Details</div>${rows}</div>`;
 }
 
 function renderResult(data) {
@@ -67,6 +111,11 @@ function renderResult(data) {
         .map(s => `<div class="item strength">${s}</div>`)
         .join('') || '<div class="no-items">None detected</div>';
 
+    const ts = formatTimestamp(data.timestamp);
+    const timeHtml = ts
+        ? `<div class="score-time">${ts.date}<br>${ts.time}</div>`
+        : '';
+
     content.innerHTML = `
         <div class="score-row">
             <div class="score-circle ${colorCls}">
@@ -77,13 +126,14 @@ function renderResult(data) {
                 <div class="risk-badge ${riskCls}">${securityLabel(data.riskLevel) || 'Unknown'}</div>
                 <div class="score-label">issues detected</div>
             </div>
+            ${timeHtml}
         </div>
         <div class="section">
-            <div class="section-title">Issues</div>
+            <div class="section-title">Detected Issues</div>
             ${issueItems}
         </div>
         <div class="section">
-            <div class="section-title">Strengths</div>
+            <div class="section-title">Detected Strengths</div>
             ${strengthItems}
         </div>
         ${renderDetails(data)}
@@ -154,12 +204,73 @@ function renderState(icon, message) {
     bindSave();
 }
 
+function renderOnboarding() {
+    content.innerHTML = `
+        <div class="onboarding">
+            <div class="onboarding-icon">🛡</div>
+            <div class="onboarding-title">Welcome to WeetWiz</div>
+            <div class="onboarding-desc">Enter your email to get your API key and start scanning sites instantly.</div>
+            <div class="onboarding-form">
+                <input type="email" id="emailInput" placeholder="your@email.com" autocomplete="email">
+                <button class="save-btn" id="getKeyBtn">Get Started →</button>
+                <div class="onboarding-msg" id="onboardingMsg"></div>
+            </div>
+            <div class="onboarding-divider">Already have a key?</div>
+            ${renderSettings(false)}
+        </div>
+    `;
+    bindSave();
+
+    const emailInput = document.getElementById('emailInput');
+    const getKeyBtn  = document.getElementById('getKeyBtn');
+    const msg        = document.getElementById('onboardingMsg');
+
+    getKeyBtn?.addEventListener('click', async () => {
+        const email = emailInput?.value?.trim();
+        if (!email || !email.includes('@')) {
+            msg.style.color = '#f87171';
+            msg.textContent = 'Enter a valid email address.';
+            msg.style.display = 'block';
+            return;
+        }
+        getKeyBtn.disabled = true;
+        getKeyBtn.textContent = 'Opening…';
+        try {
+            const res = await fetch('https://web-api.weetwiz.com/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.url) throw new Error(data.error || `Error ${res.status}`);
+            chrome.tabs.create({ url: data.url });
+            msg.style.color = '#4ade80';
+            msg.innerHTML = 'Checkout opened — your API key will arrive by email.<br>Paste it below once received.';
+            msg.style.display = 'block';
+            getKeyBtn.textContent = 'Done ✓';
+        } catch (err) {
+            msg.style.color = '#f87171';
+            msg.textContent = err.message;
+            msg.style.display = 'block';
+            getKeyBtn.disabled = false;
+            getKeyBtn.textContent = 'Get Started →';
+        }
+    });
+}
+
 (async () => {
+    const { apiKey } = await chrome.storage.local.get('apiKey');
+    if (!apiKey) {
+        renderOnboarding();
+        return;
+    }
+
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab) return;
 
     try {
-        domainEl.textContent = new URL(tab.url).hostname;
+        const hostname = new URL(tab.url).hostname;
+        domainEl.innerHTML = `<a class="ip-link domain" data-url="https://${hostname}">${hostname}</a>`;
     } catch { /* non-url tab */ }
 
     const key = `result_${tab.id}`;
@@ -168,6 +279,10 @@ function renderState(icon, message) {
 
     if (!result) {
         renderState('🔍', 'No data yet — navigate to a page');
+        return;
+    }
+    if (result.disabled) {
+        renderState('⏸', 'Scanning disabled — click ⏻ to enable');
         return;
     }
     if (result.loading) {
