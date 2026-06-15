@@ -1,4 +1,4 @@
-const API_BASE = 'https://web-api.weetwiz.com';
+const API_BASE = 'https://weetwiz-api.weetwiz.com';
 
 chrome.webRequest.onHeadersReceived.addListener(
     (details) => {
@@ -15,6 +15,7 @@ chrome.webRequest.onHeadersReceived.addListener(
                 headers[name] = h.value;
             }
         });
+        console.log('[WeetWiz] headers received:', Object.keys(headers).join(', '));
 
         const protocol = details.url.startsWith('https') ? 'https:' : 'http:';
         const tabId = details.tabId;

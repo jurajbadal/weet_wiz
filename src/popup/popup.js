@@ -236,7 +236,7 @@ function renderOnboarding() {
         getKeyBtn.disabled = true;
         getKeyBtn.textContent = 'Opening…';
         try {
-            const res = await fetch('https://web-api.weetwiz.com/api/checkout', {
+            const res = await fetch('https://weetwiz-api.weetwiz.com/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
