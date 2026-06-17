@@ -3,7 +3,7 @@
   "name": "WeetWiz",
   "version": "1.0.9",
   "description": "Passive security audit on every tab — real headers, no clicks required",
-  "permissions": ["webRequest", "storage", "tabs"],
+  "permissions": ["webRequest", "storage", "activeTab"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/js/background.js"
