@@ -3,11 +3,15 @@
   "name": "WeetWiz",
   "version": "1.0.9",
   "description": "Passive security audit on every tab — real headers, no clicks required",
-  "permissions": ["webRequest", "storage", "activeTab"],
+  "permissions": ["webRequest", "storage", "activeTab", "tabs"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/js/background.js"
   },
+  "content_scripts": [{
+    "matches": ["https://mail.google.com/*"],
+    "js": ["src/js/content.js"]
+  }],
   "action": {
     "default_popup": "src/popup/popup.html",
     "default_icon": {

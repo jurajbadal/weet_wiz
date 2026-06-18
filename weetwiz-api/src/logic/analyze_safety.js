@@ -27,8 +27,9 @@ const W = {
 // ≥70% Impressive, ≥50% Could Be Better, <50% Must Be Better
 export function computeRiskLevel(score, maxScore) {
     const pct = maxScore > 0 ? score / maxScore : 0;
-    if (pct >= 0.70) return riskLabels.IMPRESSIVE;
-    if (pct >= 0.50) return riskLabels.COULD_BE_BETTER;
+    if (pct >= 0.78) return riskLabels.IMPRESSIVE;
+    if (pct >= 0.52) return riskLabels.ALMOST_IMPRESSIVE;
+    if (pct >= 0.33) return riskLabels.COULD_BE_BETTER;
     return riskLabels.MUST_BE_BETTER;
 }
 

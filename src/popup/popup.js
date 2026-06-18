@@ -120,7 +120,7 @@ function renderResult(data) {
         <div class="score-row">
             <div class="score-circle ${colorCls}">
                 <span class="score-num">${data.total ?? '?'}</span>
-                <span class="score-max">/ ${data.maxScore ?? 20}</span>
+                <span class="score-max">/ ${data.maxScore ?? 27}</span>
             </div>
             <div class="score-meta">
                 <div class="risk-badge ${riskCls}">${securityLabel(data.riskLevel) || 'Unknown'}</div>
@@ -188,7 +188,13 @@ function bindSave() {
         const key = input?.value?.trim();
         if (!key) return;
         chrome.storage.local.set({ apiKey: key }, () => {
-            if (savedMsg) { savedMsg.style.display = 'block'; setTimeout(() => savedMsg.style.display = 'none', 2000); }
+            if (savedMsg) { savedMsg.style.display = 'block'; }
+            setTimeout(() => {
+                chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+                    if (tab?.id) chrome.tabs.reload(tab.id, { bypassCache: true });
+                });
+                window.location.reload();
+            }, 1500);
         });
     });
 }
@@ -199,7 +205,7 @@ function renderState(icon, message) {
             <div class="icon">${icon}</div>
             ${message}
         </div>
-        ${renderSettings(false)}
+        ${renderSettings(false, true)}
     `;
     bindSave();
 }
@@ -274,6 +280,17 @@ function renderOnboarding() {
     } catch { /* non-url tab */ }
 
     const key = `result_${tab.id}`;
+
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== 'session' || !changes[key]) return;
+        const r = changes[key].newValue;
+        if (!r) { renderState('🔍', 'No data yet — navigate to a page'); return; }
+        if (r.disabled) { renderState('⏸', 'Scanning disabled — click ⏻ to enable'); return; }
+        if (r.loading) { renderState('⏳', 'Analysing…'); return; }
+        if (r.error) { renderState('⚠️', r.error); return; }
+        renderResult(r);
+    });
+
     const stored = await chrome.storage.session.get(key);
     const result = stored[key];
 

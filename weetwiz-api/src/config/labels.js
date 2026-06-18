@@ -3,11 +3,12 @@
 
 // ─── Risk level labels (shared) ──────────────────────────────────────────────
 export const riskLabels = {
-    IMPRESSIVE:       'Impressive',
-    COULD_BE_BETTER:  'Could Be Better',
-    MUST_BE_BETTER:   'Must Be Better',
-    UNKNOWN:          'Unknown',
-    ERROR:            'Error',
+    IMPRESSIVE:        'Impressive',
+    ALMOST_IMPRESSIVE: 'Almost Impressive',
+    COULD_BE_BETTER:   'Could Be Better',
+    MUST_BE_BETTER:    'Must Be Better',
+    UNKNOWN:           'Unknown',
+    ERROR:             'Error',
 };
 
 // ─── Security Audit (analyze_safety.js) ──────────────────────────────────────

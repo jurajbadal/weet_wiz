@@ -49,10 +49,19 @@ export async function handleScore(request, env) {
 
         const safetyAnalysis = await analyzeSafety(headers, protocol || 'https:', '', {});
         const cdnResult = detectCDN(headers);
+        const CDN_W = 1.0;
+        safetyAnalysis.maxScore = Math.round((safetyAnalysis.maxScore + CDN_W) * 10) / 10;
         if (cdnResult.detected) {
+            safetyAnalysis.score = Math.round((safetyAnalysis.score + CDN_W) * 10) / 10;
             safetyAnalysis.findings.strengths.push(L.strengths.cdn(cdnResult.provider));
         }
+
         const cookieAnalysis = analyzeCookies(cookies);
+        const COOKIE_W = 1.0;
+        safetyAnalysis.maxScore = Math.round((safetyAnalysis.maxScore + COOKIE_W) * 10) / 10;
+        if (cookieAnalysis.issues.length === 0) {
+            safetyAnalysis.score = Math.round((safetyAnalysis.score + COOKIE_W) * 10) / 10;
+        }
 
         // SPF / DMARC — counted in score so all displayed issues are reflected
         if (apexDomain) {
@@ -70,11 +79,20 @@ export async function handleScore(request, env) {
             safetyAnalysis.riskLevel = computeRiskLevel(safetyAnalysis.score, safetyAnalysis.maxScore);
         }
 
+        // HTTPS redirect score (only when probe ran successfully)
+        if (urlObj?.protocol === 'https:' && httpsRedirectResult.value !== null) {
+            const REDIRECT_W = 1.0;
+            safetyAnalysis.maxScore = Math.round((safetyAnalysis.maxScore + REDIRECT_W) * 10) / 10;
+            const { status, location } = httpsRedirectResult.value;
+            if (status >= 300 && status < 400 && location.startsWith('https://')) {
+                safetyAnalysis.score = Math.round((safetyAnalysis.score + REDIRECT_W) * 10) / 10;
+            }
+        }
 
-        // Normalize raw score to 0-20 display scale (after all score-affecting additions)
+        // Normalize raw score to 0-27 display scale (after all score-affecting additions)
         if (safetyAnalysis.maxScore > 0) {
-            safetyAnalysis.score    = Math.round(safetyAnalysis.score / safetyAnalysis.maxScore * 20);
-            safetyAnalysis.maxScore = 20;
+            safetyAnalysis.score    = Math.round(safetyAnalysis.score / safetyAnalysis.maxScore * 27);
+            safetyAnalysis.maxScore = 27;
             safetyAnalysis.riskLevel = computeRiskLevel(safetyAnalysis.score, safetyAnalysis.maxScore);
         }
 
@@ -218,13 +236,25 @@ export async function handleAudit(request, env) {
 
         const safetyAnalysis = await analyzeSafety(headers, protocol, domain, {});
 
+        const CDN_W = 1.0;
+        safetyAnalysis.maxScore = Math.round((safetyAnalysis.maxScore + CDN_W) * 10) / 10;
         if (cdnResult.detected) {
+            safetyAnalysis.score = Math.round((safetyAnalysis.score + CDN_W) * 10) / 10;
             safetyAnalysis.findings.strengths.push(L.strengths.cdn(cdnResult.provider));
         }
 
-        // Item 4 findings
+        const COOKIE_W = 1.0;
+        safetyAnalysis.maxScore = Math.round((safetyAnalysis.maxScore + COOKIE_W) * 10) / 10;
+        if (cookieAnalysis.issues.length === 0) {
+            safetyAnalysis.score = Math.round((safetyAnalysis.score + COOKIE_W) * 10) / 10;
+        }
+
+        // Item 4 score + findings
         if (urlObj.protocol === 'https:') {
+            const REDIRECT_W = 1.0;
+            safetyAnalysis.maxScore = Math.round((safetyAnalysis.maxScore + REDIRECT_W) * 10) / 10;
             if (httpsRedirect) {
+                safetyAnalysis.score = Math.round((safetyAnalysis.score + REDIRECT_W) * 10) / 10;
                 if (redirectSameDomain) {
                     safetyAnalysis.findings.strengths.push(L.strengths.httpsRedirect);
                 } else {
@@ -249,10 +279,10 @@ export async function handleAudit(request, env) {
         }
 
 
-        // Normalize raw score to 0-20 display scale (after all score-affecting additions)
+        // Normalize raw score to 0-27 display scale (after all score-affecting additions)
         if (safetyAnalysis.maxScore > 0) {
-            safetyAnalysis.score    = Math.round(safetyAnalysis.score / safetyAnalysis.maxScore * 20);
-            safetyAnalysis.maxScore = 20;
+            safetyAnalysis.score    = Math.round(safetyAnalysis.score / safetyAnalysis.maxScore * 27);
+            safetyAnalysis.maxScore = 27;
             safetyAnalysis.riskLevel = computeRiskLevel(safetyAnalysis.score, safetyAnalysis.maxScore);
         }
         const metrics = {
