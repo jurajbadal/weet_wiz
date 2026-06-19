@@ -5,6 +5,13 @@ import { handleScoreBoth } from './routes/score-both.js';
 
 const app = express();
 app.use(express.json());
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 app.post('/api/score',      handleScore);

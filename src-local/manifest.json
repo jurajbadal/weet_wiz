@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "WeetWiz (Local)",
+  "version": "1.0.9",
+  "description": "Passive security audit on every tab — real headers, no clicks required",
+  "permissions": ["storage", "activeTab", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "content_scripts": [{
+    "matches": ["https://mail.google.com/*"],
+    "js": ["js/content.js"]
+  }],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  }
+}

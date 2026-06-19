@@ -1,7 +1,10 @@
 .PHONY: scan-up scan-down scan-restart scan-logs scan-test
 
+scan-build:
+	cd scan-api && docker build -t scan-api .
+
 scan-up:
-	cd scan-api && docker build -t scan-api . && docker run -d --name scan-api -p 8080:8080 scan-api
+	docker rm -f scan-api 2>/dev/null; docker run --name scan-api -p 8080:8080 scan-api
 
 scan-down:
 	docker stop scan-api && docker rm scan-api
