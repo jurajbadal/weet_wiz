@@ -1,0 +1,107 @@
+// Central label/message definitions for all BE analysis output.
+// Edit here to update any finding text — no extension release needed.
+
+// ─── Risk level labels (shared) ──────────────────────────────────────────────
+export const riskLabels = {
+    IMPRESSIVE:        'Impressive',
+    ALMOST_IMPRESSIVE: 'Almost Impressive',
+    COULD_BE_BETTER:   'Could Be Better',
+    MUST_BE_BETTER:    'Must Be Better',
+    UNKNOWN:           'Unknown',
+    ERROR:             'Error',
+};
+
+// ─── Security Audit (analyze_safety.js) ──────────────────────────────────────
+export const auditLabels = {
+    strengths: {
+        https:               '✅ Using HTTPS protocol',
+        hsts:       (n)   => `✅ HSTS enabled with ${n} security parameters`,
+        nosniff:             '✅ X-Content-Type-Options: nosniff — Prevents MIME-type sniffing',
+        referrerPolicy:      '✅ Referrer Policy set — Controls information leakage',
+        techHidden:          '✅ Technology stack properly hidden',
+        csp:                 '✅ Content Security Policy configured — XSS injection risk mitigated',
+        xFrame:              '✅ X-Frame-Options set — clickjacking protection active',
+        coop:                '✅ Cross-Origin Opener Policy set — window isolation active',
+        coep:                '✅ Cross-Origin Embedder Policy set — cross-origin resource isolation active',
+        permissions:         '✅ Permissions Policy configured — browser feature access restricted',
+        cdn:        (p)   => `✅ CDN detected: ${p} — DDoS protection and WAF likely active`,
+        httpsRedirect:       '✅ HTTP → HTTPS redirect active — plain HTTP connections are upgraded',
+        httpsRedirectExt:(d)=> `✅ HTTP → HTTPS redirect active — redirects to ${d}`,
+        spfDmarc:            '✅ SPF and DMARC records present — email spoofing protection active',
+    },
+    warnings: {
+        noHttps:             '❌ Not using HTTPS — Connection is not secure',
+        noCsp:               '❌ No Content Security Policy — vulnerable to XSS attacks',
+        cspUnsafeInline:     "⚠️ CSP contains 'unsafe-inline' — XSS protection weakened",
+        cspUnsafeEval:       "⚠️ CSP contains 'unsafe-eval' — code execution risk via eval()",
+        cspWildcard:         '⚠️ CSP contains wildcard (*) source — overly permissive policy',
+        noXFrame:            '❌ No X-Frame-Options — vulnerable to clickjacking',
+        corsWildcard:        '❌ Overly permissive CORS policy — any site can access data',
+        corsCredentials:     '❌ CORS: allow-credentials: true with wildcard origin — credential leak risk',
+        corsMethods:         '⚠️ CORS: DELETE/PUT methods allowed from any origin — data modification risk',
+        xssDisabled:         '⚠️ x-xss-protection: 0 — XSS filter explicitly disabled',
+        noHsts:              '⚠️ HSTS not enabled — connection could be downgraded',
+        hstsShort:           '⚠️ HSTS max-age below recommended 1 year — HSTS protection limited',
+        noPermissions:       '⚠️ No Permissions Policy — browser features unrestricted',
+        noCoop:              '⚠️ No Cross-Origin Opener Policy — vulnerable to window attacks',
+        noCoep:              '⚠️ No Cross-Origin Embedder Policy — resource loading unrestricted',
+        serverExposed:       '⚠️ Server information exposed',
+        poweredByExposed:    '⚠️ X-Powered-By header exposed — technology stack revealed',
+        noXContentType:      '⚠️ No X-Content-Type-Options — MIME-type sniffing possible',
+        xContentTypeInvalid: "⚠️ X-Content-Type-Options not set to 'nosniff' — MIME-type sniffing possible",
+        noReferrer:          '⚠️ No Referrer-Policy — URL information may leak to third parties',
+        etagExposed:         '⚠️ ETag header present — can be used to track users across sessions and in private browsing',
+        lastModifiedExposed: '⚠️ Last-Modified header present — browser resends If-Modified-Since on every request, enabling cross-session tracking',
+        noHttpsRedirect:     '⚠️ No HTTP → HTTPS redirect — users on http:// land on plain HTTP',
+        noSpf:               '⚠️ No SPF record — domain can be spoofed in email From: header',
+        noDmarc:             '⚠️ No DMARC record — no policy to handle failed SPF/DKIM checks',
+    },
+    info: {
+        httpsRedirectExtDomain: (d) => `ℹ️ Redirect goes to a different domain: ${d}`,
+    },
+};
+
+// ─── Phishing Check (check_security.js) ──────────────────────────────────────
+export const phishingLabels = {
+    security: {
+        noCsp:    '⚠️ No Content Security Policy found — this header helps browsers block certain injection attacks',
+        noXFrame: '⚠️ No X-Frame-Options found — this header helps protect against clickjacking',
+        noHsts:   '⚠️ No HSTS header found — connections may not be forced to use HTTPS',
+        corsOpen: '⚠️ Open CORS policy detected — any external site is permitted to make requests',
+    },
+    technical: {
+        noSpfNoDmarc:    '⚠️ No SPF or DMARC records found — email authentication is not configured for this domain',
+        noSpf:           '⚠️ No SPF record — domain can be spoofed in email From: header',
+        noDmarc:         '⚠️ No DMARC record — no policy to handle failed SPF/DKIM checks',
+        spfDmarcOk:      '✅ SPF and DMARC records present — email spoofing protection configured',
+        redirectDiff: (d)=> `⚠️ HTTP redirects to a different domain: ${d} — consider verifying where this URL leads`,
+        noHttpsRedirect:  '⚠️ No HTTP → HTTPS redirect detected — many sites automatically upgrade plain HTTP connections',
+        serverCompare:    'Server Infrastructure Comparison:',
+        checkedSite:  (p, l) => `• Checked site: ${p} (${l})`,
+        legitSite:    (p, l) => `• Legitimate site: ${p} (${l})`,
+        diffServer:       '⚠️ Different server infrastructure detected',
+        headerMatch:  (h, n) => `✓ ${h.toUpperCase()}: Matches legitimate site (-${n} points)`,
+        legitError:   (m)   => `⚠️ Error comparing with legitimate site: ${m}`,
+    },
+    domain: {
+        highRiskTld:      '⚠️ Uncommon TLD detected:',
+        highRiskTldDetail:(t)=> `• Domain uses ".${t}" — this extension is sometimes seen on low-cost or disposable domains`,
+        highRiskTldNote:  '• This alone is not conclusive, but worth considering alongside other signals',
+        brandDetected:    '⚠️ Brand name detected in domain:',
+        brandDetail:  (b)=> `• Domain contains "${b}" — consider verifying this is an official address`,
+        brandNote:        "• If in doubt, navigate directly to the brand's known website",
+        similarity:       '⚠️ Domain similarity detected:',
+        checkedDomain:(d)=> `• Checked domain: ${d}`,
+        knownDomain:  (d)=> `• Known domain: ${d}`,
+        extraChars:   (c)=> `• Extra characters: "${c}"`,
+        similarityNote:   '• The domains are closely related — verify you are on the intended site',
+        diffTld:              '❌ Suspicious TLD vs Known Domain:',
+        checkedTld:       (t)=> `• Checked TLD: .${t}`,
+        legitTld:         (t)=> `• Legitimate TLD: .${t}`,
+        diffTldNote:          '• This TLD is commonly used for cheap or disposable domains — a reputable business typically uses a standard TLD',
+        diffTldRegional:      'ℹ️ Different Regional TLD:',
+        diffTldRegionalNote:  '• TLDs differ — if you expected an international site, verify this is the correct regional domain',
+        domainSimilar:        '⚠️ Visually similar domain detected:',
+        domainSimilarNote:    '• The domains are very similar — verify you are on the intended site and not a lookalike',
+    },
+};
