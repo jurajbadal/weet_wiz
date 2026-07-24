@@ -6,7 +6,7 @@ import { analyzeCookies }         from '../logic/analyze_cookies.js';
 import { auditLabels as L }       from '../config/labels.js';
 
 // POST /api/score — weet_wiz: browser sends real headers, no server re-fetch
-export async function handleScore(request, env) {
+export async function handleScore(request, env, apiKeyRow) {
     const { headers, protocol, cookies = [], serverIp = null, url = '' } = await request.json();
     if (!headers) return Response.json({ error: 'headers required' }, { status: 400 });
 
@@ -141,6 +141,36 @@ export async function handleScore(request, env) {
             } catch { /* non-fatal */ }
         }
 
+        // Part 1 (TODO_COUNT.md) — per-API-key usage counter, atomic increment
+        let usageCount = null;
+        if (apiKeyRow?.id) {
+            const counterRow = await env.DB.prepare(
+                `UPDATE api_keys SET usage_count = usage_count + 1, last_used_at = datetime('now')
+                 WHERE id = ? RETURNING usage_count`
+            ).bind(apiKeyRow.id).first();
+            usageCount = counterRow?.usage_count ?? null;
+        }
+
+        // Part 2 (TODO_COUNT.md) — global per-domain flowing average, anonymous, collect-only
+        if (domain && env.ANALYTICS_DB) {
+            await env.ANALYTICS_DB.prepare(
+                `INSERT INTO domain_scores (hostname, run_count, avg_score, last_score, last_scanned_at)
+                 VALUES (?, 1, ?, ?, datetime('now'))
+                 ON CONFLICT(hostname) DO UPDATE SET
+                   avg_score = avg_score + (excluded.last_score - avg_score) / (run_count + 1),
+                   run_count = run_count + 1,
+                   last_score = excluded.last_score,
+                   last_scanned_at = datetime('now')`
+            ).bind(domain, safetyAnalysis.score, safetyAnalysis.score).run();
+
+            // Testing-phase cap (20 rows, FIFO by id) — remove/raise before real launch
+            await env.ANALYTICS_DB.prepare(
+                `DELETE FROM domain_scores WHERE id NOT IN (
+                   SELECT id FROM domain_scores ORDER BY id DESC LIMIT 20
+                 )`
+            ).run();
+        }
+
         return Response.json({
             total:      safetyAnalysis.score,
             maxScore:   safetyAnalysis.maxScore,
@@ -151,6 +181,7 @@ export async function handleScore(request, env) {
             cookies:    cookieAnalysis,
             server:     { type: serverType, poweredBy: headers['x-powered-by'] || null },
             connection: { serverIp: resolvedIp, hostingInfo },
+            usageCount,
         });
     } catch (error) {
         console.error('Score error:', error);

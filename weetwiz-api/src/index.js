@@ -41,13 +41,14 @@ export default {
             return addCors(await handleCheckout(request, env));
 
         // Protected
-        const authError = await requireApiKey(request, env);
-        if (authError) return addCors(authError);
+        const authResult = await requireApiKey(request, env);
+        if (authResult instanceof Response) return addCors(authResult);
+        const apiKeyRow = authResult;
 
         if (pathname === '/api/audit' && method === 'POST')
             return addCors(await handleAudit(request, env));
         if (pathname === '/api/score' && method === 'POST')
-            return addCors(await handleScore(request, env));
+            return addCors(await handleScore(request, env, apiKeyRow));
 
         return addCors(new Response('Not found', { status: 404 }));
     }

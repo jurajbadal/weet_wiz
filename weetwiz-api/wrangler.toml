@@ -10,6 +10,11 @@ binding = "DB"
 database_name = "weetwiz-db"
 database_id = "3e74479e-067c-4a2c-a7cb-4b95462aa557"
 
+[[d1_databases]]
+binding = "ANALYTICS_DB"
+database_name = "weetwiz-analytics-db"
+database_id = "6349c1ac-1718-4021-8b1a-b7c6a6206df6"
+
 [vars]
 EMAIL_FROM = "WeetWiz <noreply@weetwiz.com>"
 APP_URL = "https://weetwiz-api.weetwiz.com"

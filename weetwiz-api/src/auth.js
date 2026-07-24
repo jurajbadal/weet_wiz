@@ -7,5 +7,5 @@ export async function requireApiKey(request, env) {
     ).bind(key).first();
 
     if (!row) return Response.json({ error: 'Invalid or inactive API key' }, { status: 401 });
-    return null;
+    return row;
 }
