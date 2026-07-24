@@ -112,7 +112,7 @@ function renderResult(data) {
         .join('') || '<div class="no-items">None detected</div>';
 
     const ts = formatTimestamp(data.timestamp);
-    const scanLine = data.usageCount ? `<br>Scan #${data.usageCount}` : '';
+    const scanLine = data.usageCount ? `<br><span class="scan-count">Scan #${data.usageCount}</span>` : '';
     const timeHtml = ts
         ? `<div class="score-time">${ts.date}<br>${ts.time}${scanLine}</div>`
         : '';
